@@ -6,7 +6,7 @@ import { hideBin } from 'yargs/helpers';
 import fs from 'fs';
 
 
-async function buildScoreData(scoreId: string) {
+async function buildScoreData(scoreId: string, includeFrames: Boolean) {
     console.log(`Building score data for score ${scoreId}`);
     console.log(`Fetching replay data for score ${scoreId}`);
     const replay = await downloadReplayServer(scoreId);
@@ -28,6 +28,11 @@ async function buildScoreData(scoreId: string) {
         scoreStatData: scoreStatData,
         map: map,
     };
+
+    // Strip out the frames if we don't want them
+    if (!includeFrames) {
+        delete data.replay.frames;
+    }
 
     // Write to a file
     let jsonData = JSON.stringify(data, null, 2);
@@ -59,7 +64,12 @@ const argv = yargs(hideBin(process.argv))
       description: 'The ID of the score to build',
       alias: 's',
       type: 'number',
-    }
+    },
+    noFrames: {
+        description: 'Whether or not to include the frames in the replay',
+        alias: 'n',
+        type: 'boolean',
+    },
   })
   .demandCommand(1, 'You need at least one command before moving on')
   .help()
@@ -67,6 +77,12 @@ const argv = yargs(hideBin(process.argv))
   .argv as any;
 
 if (argv._.includes('buildScoreData')) {
-    buildScoreData(argv.scoreId);
+
+    let includeFrames: Boolean = true;
+    if (argv.noFrames) {
+        includeFrames = false;
+    }
+
+    buildScoreData(argv.scoreId, includeFrames);
 }
 
